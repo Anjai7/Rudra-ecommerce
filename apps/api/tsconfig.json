@@ -6,6 +6,7 @@
     "module": "CommonJS",
     "moduleResolution": "node",
     "declaration": false,
+    "declarationMap": false,
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
     "target": "ES2022"

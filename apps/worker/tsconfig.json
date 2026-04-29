@@ -6,7 +6,8 @@
     "module": "CommonJS",
     "moduleResolution": "node",
     "target": "ES2022",
-    "declaration": false
+    "declaration": false,
+    "declarationMap": false
   },
   "include": ["src/**/*.ts"]
 }

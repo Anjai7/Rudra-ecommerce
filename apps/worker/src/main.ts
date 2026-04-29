@@ -7,6 +7,7 @@
 
 import { Worker, Queue } from 'bullmq';
 import Redis from 'ioredis';
+import * as http from 'http';
 import { processInventoryJob } from './processors/inventory.processor';
 import { processEmailJob } from './processors/email.processor';
 import { processReconciliationJob } from './processors/reconciliation.processor';
@@ -123,3 +124,14 @@ console.info(`👷 Workers: reservation-expiry, email, reconciliation`);
 setupScheduledJobs().catch(console.error);
 
 console.info('✅ Worker process ready');
+
+// ─── Dummy HTTP Server for Render Free Tier ─────────────────
+// Render requires Web Services to bind to a port within 10 minutes.
+// This allows deploying the worker as a free "Web Service".
+const port = process.env.PORT || 8080;
+http.createServer((req, res) => {
+  res.writeHead(200, { 'Content-Type': 'text/plain' });
+  res.end('Worker is running and healthy\\n');
+}).listen(port, () => {
+  console.info(`🌐 Dummy HTTP server listening on port ${port} (Render Health Check)`);
+});

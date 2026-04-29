@@ -115,7 +115,7 @@ export class CartService {
   }
 
   /** Remove item from cart */
-  async removeItem(cartId: string, itemId: string) {
+  async removeItem(_cartId: string, itemId: string) {
     await prisma.cartItem.delete({ where: { id: itemId } });
     return { success: true, data: null, message: 'Item removed' };
   }

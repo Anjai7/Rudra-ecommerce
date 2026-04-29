@@ -12,6 +12,7 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
+    "@prisma/client": "^5.10.0",
     "@ecommerce/database": "workspace:*",
     "@ecommerce/shared-types": "workspace:*",
     "bullmq": "^5.1.0",

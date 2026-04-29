@@ -1,0 +1,52 @@
+name: Rollback
+
+on:
+  workflow_dispatch:
+    inputs:
+      target_sha:
+        description: 'Git SHA to rollback to'
+        required: true
+      rollback_db:
+        description: 'Also rollback database migration? (yes/no)'
+        required: false
+        default: 'no'
+
+jobs:
+  rollback:
+    name: Rollback Deployment
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.target_sha }}
+
+      - name: Rollback K8s
+        if: ${{ vars.DEPLOY_TARGET == 'k8s' }}
+        run: |
+          echo "${{ secrets.KUBECONFIG }}" | base64 -d > kubeconfig
+          export KUBECONFIG=kubeconfig
+          kubectl set image deployment/api api=${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-api:${{ github.event.inputs.target_sha }} -n ecommerce
+          kubectl set image deployment/worker worker=${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-worker:${{ github.event.inputs.target_sha }} -n ecommerce
+          kubectl rollout status deployment/api -n ecommerce --timeout=300s
+        env:
+          REGISTRY: ghcr.io
+          IMAGE_PREFIX: ${{ github.repository }}
+
+      - name: Rollback Database
+        if: ${{ github.event.inputs.rollback_db == 'yes' }}
+        run: |
+          echo "⚠️ Database rollback requested — manual intervention may be needed"
+          echo "Run: pnpm db:migrate -- --to <target_migration>"
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+      - name: Verify Rollback
+        run: |
+          sleep 15
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" ${{ vars.API_URL }}/v1/health)
+          if [ "$STATUS" = "200" ]; then
+            echo "✅ Rollback successful — health check passed"
+          else
+            echo "❌ Rollback may have issues — HTTP $STATUS"
+            exit 1
+          fi
